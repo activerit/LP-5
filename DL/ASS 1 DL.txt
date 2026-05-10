@@ -1,0 +1,110 @@
+# ==========================================
+# Boston Housing Price Prediction using DNN
+# ==========================================
+
+# Step 1: Import Libraries
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense
+
+# Step 2: Load Dataset
+df = pd.read_csv('1_boston_housing.csv')
+
+# Display dataset shape
+print('Dataset Shape:', df.shape)
+
+# Display first 10 rows
+print(df.head(10))
+
+# Step 3: Split Features and Target
+X = df.drop('MEDV', axis=1)
+y = df['MEDV']
+
+print('Features shape:', X.shape)
+print('Target shape:', y.shape)
+
+# Step 4: Train-Test Split
+X_train, X_test, y_train, y_test = train_test_split(
+    X,
+    y,
+    test_size=0.2,
+    random_state=42
+)
+
+print('Training samples:', X_train.shape[0])
+print('Testing samples:', X_test.shape[0])
+
+# Step 5: Feature Scaling
+scaler = StandardScaler()
+
+X_train = scaler.fit_transform(X_train)
+X_test = scaler.transform(X_test)
+
+print('Scaling done.')
+
+# Step 6: Build Deep Neural Network
+model = Sequential()
+
+# Hidden Layers
+model.add(Dense(
+    64,
+    activation='relu',
+    input_shape=(X_train.shape[1],)
+))
+
+model.add(Dense(32, activation='relu'))
+model.add(Dense(16, activation='relu'))
+
+# Output Layer
+model.add(Dense(1))
+
+# Display Model Summary
+model.summary()
+
+# Step 7: Compile Model
+model.compile(
+    optimizer='adam',
+    loss='mse',
+    metrics=['mae']
+)
+
+# Step 8: Train Model
+history = model.fit(
+    X_train,
+    y_train,
+    epochs=100,
+    batch_size=16,
+    validation_split=0.1,
+    verbose=1
+)
+
+# Step 9: Evaluate Model
+test_loss, test_mae = model.evaluate(X_test, y_test)
+
+print("Mean squared error on test data :", round(test_loss, 4))
+print("Mean absolute error on test data :", round(test_mae, 4))
+
+# Step 10: Predictions
+y_pred = model.predict(X_test).flatten()
+
+print("\nActual vs Predicted Values:\n")
+
+for actual, predicted in zip(y_test[:5], y_pred[:5]):
+    print(actual, predicted)
+
+# Step 11: Plot Graph
+plt.plot(history.history['loss'], label="Training loss")
+plt.plot(history.history['val_loss'], label="Validation loss")
+
+plt.legend()
+plt.title("Loss Graph")
+plt.xlabel("Epochs")
+plt.ylabel("Loss")
+
+plt.show()
